@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1622">
+  <title>雪线 · ESP32 无线上位机</title>
+  <link rel="stylesheet" href="/console.css">
+  <script src="/console.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none"><path d="m4 24 10-16 6 10 3-4 5 10M11 14l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="brand">雪线 <small>SNOWLINE</small></span>
+      <span class="badge" id="link-status" role="status">连接上位机中</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="intro">
+      <p class="eyebrow">ESP32-S3 &nbsp;/&nbsp; LAN CONSOLE</p>
+      <h1>无线上位机</h1>
+      <p>查看 MPU6050 姿态、六轴数据和开发板的 Wi-Fi 链路。</p>
+    </div>
+
+    <div class="panels session-controls">
+      <section class="panel" aria-labelledby="capture-title">
+        <div class="section-head">
+          <div><p class="eyebrow">DEVICE CAPTURE</p><h2 id="capture-title">板端采集</h2></div>
+          <span class="tag" id="capture-mode">等待开发板</span>
+        </div>
+        <div class="action-row">
+          <button type="button" id="capture-start" disabled>启动采集</button>
+          <button type="button" class="secondary" id="capture-stop" disabled>停止采集</button>
+        </div>
+        <p class="action-status" id="capture-status" role="status">停止采集后仍保持 Wi-Fi 连接。</p>
+      </section>
+
+      <section class="panel" aria-labelledby="record-title">
+        <div class="section-head">
+          <div><p class="eyebrow">CSV RECORDING</p><h2 id="record-title">数据保存</h2></div>
+          <span class="tag" id="record-mode">未保存</span>
+        </div>
+        <form id="record-form">
+          <label for="record-name">记录名称</label>
+          <input id="record-name" type="text" maxlength="48" placeholder="例如 右倾练习 01" required>
+          <div class="action-row">
+            <button type="submit" id="record-start" disabled>开始保存</button>
+            <button type="button" class="secondary" id="record-stop" disabled>停止保存</button>
+          </div>
+        </form>
+        <p class="action-status" id="record-status" role="status">保存本次收到的 IMU 数据。</p>
+        <a id="record-download" hidden>下载最近一次 CSV</a>
+      </section>
+    </div>
+
+    <section class="panel motion" aria-labelledby="motion-title">
+      <div class="section-head">
+        <div><p class="eyebrow">MPU6050 / ESKF</p><h2 id="motion-title">板端姿态</h2></div>
+        <span class="tag" id="imu-status" role="status">等待数据</span>
+      </div>
+      <div class="attitude">
+        <div><span>横滚 · Roll</span><strong id="roll">—</strong></div>
+        <div><span>俯仰 · Pitch</span><strong id="pitch">—</strong></div>
+        <div><span>相对偏航 · Yaw</span><strong id="yaw">—</strong></div>
+      </div>
+      <dl class="motion-data">
+        <div><dt>加速度 X / Y / Z</dt><dd id="acceleration">—</dd></div>
+        <div><dt>角速度 X / Y / Z</dt><dd id="gyroscope">—</dd></div>
+        <div><dt>芯片温度</dt><dd id="imu-temp">—</dd></div>
+        <div><dt>OLED 通信</dt><dd id="oled-status">—</dd></div>
+      </dl>
+      <p id="imu-quality">角度基于传感器安装坐标，Yaw 以本次校准为起点。</p>
+    </section>
+
+    <section class="metrics" aria-label="实时数据">
+      <div class="metric"><span>最新包号</span><strong id="sequence">—</strong><small>SEQ</small></div>
+      <div class="metric"><span>信号强度</span><strong><span id="rssi">—</span> <small>dBm</small></strong><small>RSSI</small></div>
+      <div class="metric"><span>本次收到</span><strong id="received">—</strong><small>有效数据包</small></div>
+      <div class="metric"><span>序号缺口</span><strong id="missed">—</strong><small>从首个收到的包起计</small></div>
+    </section>
+
+    <div class="panels">
+      <section class="panel signal" aria-labelledby="signal-title">
+        <div class="section-head">
+          <div><p class="eyebrow">SIGNAL TRACE</p><h2 id="signal-title">Wi-Fi 信号趋势</h2></div>
+          <span class="tag">最近 30 包</span>
+        </div>
+        <div class="plot">
+          <div class="scale" aria-hidden="true"><span id="rssi-high">—</span><span id="rssi-low">—</span></div>
+          <svg id="rssi-chart" viewBox="0 0 640 160" preserveAspectRatio="none" role="img" aria-label="最近数据包的 RSSI 趋势">
+            <path class="grid" d="M0 1H640M0 53H640M0 106H640M0 159H640"/>
+            <polyline id="rssi-line" class="trace" fill="none" points=""/>
+            <circle id="rssi-dot" class="dot" r="4" hidden/>
+          </svg>
+          <p id="chart-empty">等待开发板上传测试包</p>
+        </div>
+        <div class="chart-times"><span id="first-time">—</span><span id="last-time">—</span></div>
+      </section>
+
+      <section class="panel device" aria-labelledby="device-title">
+        <div class="section-head">
+          <div><p class="eyebrow">DEVICE LINK</p><h2 id="device-title">设备与探测</h2></div>
+          <span class="tag">Wi-Fi</span>
+        </div>
+        <dl>
+          <div><dt>开发板 IP</dt><dd id="peer">—</dd></div>
+          <div><dt>启动标识</dt><dd id="boot">—</dd></div>
+          <div><dt>运行时间</dt><dd id="uptime">—</dd></div>
+        </dl>
+        <button type="button" id="probe-button" disabled>验证双向通信 <span aria-hidden="true">↗</span></button>
+        <p id="probe-status" role="status">开发板在线后可发送探测。</p>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="packets-title">
+      <div class="section-head">
+        <div><p class="eyebrow">PACKET LOG</p><h2 id="packets-title">最近收到的数据包</h2></div>
+        <span class="tag">实时刷新</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">电脑接收时间</th><th scope="col">包号</th><th scope="col">RSSI</th><th scope="col">探测回执</th></tr></thead>
+          <tbody id="packets"><tr><td colspan="4">暂无数据</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <footer>局域网联调模式 <span aria-hidden="true">·</span> 测试数据</footer>
+  </main>
+</body>
+</html>

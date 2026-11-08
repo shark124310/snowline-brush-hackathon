@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f1e8">
+  <title>腕墨 · 书法动作复盘</title>
+  <link rel="stylesheet" href="/ink.css">
+  <script src="/ink.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="shell masthead-inner">
+      <div class="identity">
+        <span class="seal" aria-hidden="true">墨</span>
+        <div><strong>腕墨</strong><span>书法动作复盘</span></div>
+      </div>
+      <div class="mode-group" aria-label="数据来源">
+        <button id="mode-demo" type="button" aria-pressed="true">实测回放</button>
+        <button id="mode-live" type="button" aria-pressed="false">实板采集</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="heading" aria-labelledby="title">
+      <div>
+        <p class="eyebrow">INK STUDIO / 01</p>
+        <h1 id="title">逐笔练习</h1>
+        <p>对照范线回看估计轨迹，找到本笔最值得调整的一段。</p>
+      </div>
+      <div id="glyphs" class="glyphs" aria-label="选择练习字"></div>
+    </section>
+
+    <div class="workspace">
+      <section class="paper-panel" aria-labelledby="paper-title">
+        <div class="panel-head">
+          <div><p class="eyebrow">PRACTICE SHEET</p><h2 id="paper-title">笔画轨迹</h2></div>
+          <span class="pill" id="stroke-count">第 1 / 3 笔</span>
+        </div>
+        <div class="sheet-stage">
+          <svg id="sheet" viewBox="0 0 320 320" role="img" aria-label="米字格内的范线和逐笔对齐的估计轨迹">
+            <rect x="24" y="24" width="272" height="272" rx="1" class="sheet-border"/>
+            <path d="M160 24v272M24 160h272M24 24l272 272M296 24L24 296" class="sheet-grid"/>
+            <g id="guides"></g><g id="ink-paths"></g><g id="ink-marker"></g>
+          </svg>
+        </div>
+        <div class="paper-bottom">
+          <div class="legend"><span class="legend-guide">范线</span><span class="legend-trace">估计轨迹</span></div>
+          <span>逐笔对齐 · 位置按范字示意</span>
+        </div>
+        <div id="stroke-steps" class="steps" aria-label="选择笔画"></div>
+      </section>
+
+      <section class="review-panel" aria-labelledby="review-title">
+        <div class="panel-head">
+          <div><p class="eyebrow">STROKE REVIEW</p><h2 id="review-title">本笔反馈</h2></div>
+          <span class="pill source" id="source">回放</span>
+        </div>
+        <div class="score-area">
+          <div><p class="metric-label">形状接近度</p><p class="score"><strong id="score">—</strong><span> / 100</span></p></div>
+          <p class="score-note" id="reference-label">参考范线</p>
+        </div>
+        <dl class="metrics">
+          <div><dt>有效动作时间</dt><dd id="duration">—</dd></div>
+          <div><dt>估计净位移</dt><dd id="displacement">—</dd></div>
+          <div><dt id="tilt-label">姿态偏转</dt><dd id="tilt">—</dd></div>
+        </dl>
+        <div class="feedback" aria-live="polite">
+          <span class="feedback-mark" aria-hidden="true"></span>
+          <div><strong id="feedback-title">练习提示</strong><p id="feedback-text"></p></div>
+        </div>
+        <p id="capture-status" class="capture-status" role="status"></p>
+        <div class="actions">
+          <button id="primary-action" class="primary" type="button">播放本笔</button>
+          <button id="next-stroke" class="secondary" type="button">下一笔</button>
+        </div>
+        <div class="utility">
+          <button id="set-reference" type="button">设为示范</button>
+          <button id="export-session" type="button">导出本字</button>
+          <button id="export-raw" type="button" hidden>下载本字原始数据</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="timeline" aria-labelledby="timeline-title">
+      <div class="panel-head">
+        <div><p class="eyebrow">MOTION TIMELINE</p><h2 id="timeline-title">本笔姿态回放</h2></div>
+        <div class="timeline-controls">
+          <span id="time-readout" class="time-readout">—</span>
+          <button id="replay-capture" class="secondary" type="button" hidden>播放</button>
+        </div>
+      </div>
+      <svg id="attitude-chart" viewBox="0 0 840 112" preserveAspectRatio="none" role="img" aria-label="当前笔画的倾角时间线"></svg>
+      <label for="scrub" class="sr-only">回放进度</label>
+      <input id="scrub" type="range" min="0" max="1000" value="1000" disabled>
+      <div class="timeline-foot"><span id="attitude-label">倾角时间线</span><span id="device">本地工作台</span></div>
+    </section>
+  </main>
+</body>
+</html>

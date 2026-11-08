@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f2eb"><title>墨序 · 毛笔书写工作台</title>
+<link rel="stylesheet" href="/assets/style.css"><link rel="stylesheet" href="/assets/live.css"><link rel="stylesheet" href="/assets/stroke.css?v=3"><script src="/assets/app.js" defer></script><script src="/assets/stroke.js?v=3" defer></script>
+</head><body>
+<header class="header">
+ <a class="brand" href="/"><span class="seal">序</span><span><b>墨序</b><small>BRUSH · A MOMENT IN MOTION</small></span></a>
+ <nav aria-label="主导航"><button class="nav active" data-view="workbench">书写工作台</button><button class="nav" data-view="strokes">逐笔复盘</button><button class="nav" data-view="templates">示范与验证</button><button class="nav" data-view="guide">接入指南</button></nav>
+ <span id="server-status" class="connection"><i></i>正在连接</span>
+</header>
+<main class="layout">
+ <aside class="sidebar">
+  <div class="eyebrow">YOUR WRITING SPACE</div><h1>落笔有迹，<br>用笔有据。</h1><p class="intro">记录一段书写，观察笔杆的运动。<br>从自己的示范，开始下一次练习。</p>
+  <section class="import-panel">
+   <div class="section-heading"><h2>导入一段书写</h2><span class="tiny">CSV</span></div>
+   <label class="drop-zone" id="drop-zone" for="csv-file"><span class="upload-icon">↥</span><strong>选择或拖入 CSV</strong><span>六轴＋设备时间戳 · 最大 5 MB</span><input id="csv-file" type="file" accept=".csv,.tsv,text/csv" multiple></label>
+   <label class="field">记录用途<select id="purpose"><option value="practice">练习记录 · 不提供答案</option><option value="template">示范模板</option><option value="validation">验证集 · 校准阈值</option><option value="test">独立测试集</option></select></label>
+   <div class="field"><span>标注字 <small id="label-hint">练习模式不使用标签</small></span><div class="character-picks" role="group" aria-label="标注字"><button data-label="一" class="selected" disabled>一</button><button data-label="十" disabled>十</button><button data-label="口" disabled>口</button><button data-label="其他" disabled>其他</button></div></div>
+   <details class="connection-settings"><summary>书写者与安装设置</summary><label class="field">书写者 ID<input id="writer-id" value="writer-01" maxlength="64"></label><label class="field">安装版本<input id="mount-id" value="mount-01" maxlength="64"></label><label class="field">接口令牌（本机默认留空）<input id="api-token" type="password" autocomplete="off" placeholder="仅局域网模式需要"></label><button class="button subtle" id="save-settings">应用连接设置</button></details>
+  </section>
+  <div class="section-heading records-heading"><h2>我的记录</h2><span id="record-count" class="tiny">0 条</span></div>
+  <div id="record-list" class="record-list"><p class="empty-note">还没有记录，导入后会保存在这里。</p></div>
+  <button class="demo-button" id="load-demo"><span>先看看软件示例 ↗</span><small>合成数据 · 与真实记录隔离</small></button>
+  <div class="sidebar-foot">MPU6050 · ESP32-S3 · 六轴记录<br>实时窗口＋CSV · USB 串口预留 115200</div>
+ </aside>
+ <section class="workspace">
+  <section id="view-workbench" class="view">
+   <article class="live-panel" aria-label="实时书写窗口">
+    <div class="section-heading"><div><div class="eyebrow">LIVE WRITING</div><h3>看见落笔的过程</h3></div><div class="live-status" id="live-status" role="status"><i></i><span id="live-status-text">尚未开始采集</span></div></div>
+    <p class="live-hint" id="live-hint">开始真实记录后，等待串口桥或硬件 HTTP 发送数据；收到样本再落笔。</p>
+    <div class="live-actions"><button id="live-start" class="button primary">开始真实记录</button><button id="live-simulate" class="button">试播模拟实时流</button><button id="live-stop" class="button stop-button" disabled>结束并分析</button><button id="goto-strokes" class="button">逐笔练习 ↗</button><button id="live-presentation" class="button subtle">演示大屏 ↗</button></div>
+    <div class="live-values" aria-label="最新六轴样本"><span>AX <b id="live-ax">—</b><small>g</small></span><span>AY <b id="live-ay">—</b><small>g</small></span><span>AZ <b id="live-az">—</b><small>g</small></span><span>GX <b id="live-gx">—</b><small>°/s</small></span><span>GY <b id="live-gy">—</b><small>°/s</small></span><span>GZ <b id="live-gz">—</b><small>°/s</small></span></div>
+    <div class="live-meta"><span id="live-counter">0 个实时样本</span><span id="live-lag">页面约 10 次/秒增量刷新；与设备采样频率独立</span><code id="live-record-id">尚无实时会话</code></div>
+   </article>
+   <div class="workspace-title"><div><div class="eyebrow">OBSERVE · COMPARE · PRACTICE</div><h2 id="record-title">一段书写，慢慢看清</h2></div><span class="badge" id="source-badge">等待真实记录</span></div>
+   <div class="overview">
+    <article class="glyph-card"><div class="card-label"><span id="glyph-title">候选字</span><span id="match-state">等待记录</span></div><div class="rice-grid"><span id="glyph">—</span></div><div class="glyph-caption" id="glyph-caption">一 · 十 · 口，小词表运动模式识别</div><span class="reference-note">显示字符为系统参考字形，不是实际墨迹</span></article>
+    <article class="pose-card"><div class="card-label"><span>笔杆姿态</span><span class="tiny" id="pose-state">等待姿态角</span></div><div class="pose-scene"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="axis axis-x">X</span><span class="axis axis-z">Z</span><div class="pen-model" id="pen-model"><div class="pen-cap"></div><div class="pen-shaft"></div><div class="pen-neck"></div><div class="pen-brush"></div></div><span class="pose-shadow"></span></div><div class="angles"><span>ROLL <b id="angle-roll">—</b></span><span>PITCH <b id="angle-pitch">—</b></span><span>YAW <b id="angle-yaw">—</b></span></div><p>由设备欧拉角驱动 · 姿态展示不代表笔尖位移</p></article>
+   </div>
+   <div class="metrics"><article><span>记录时长</span><strong id="metric-duration">—<small>s</small></strong><em>依据设备时间</em></article><article><span>有效保存频率</span><strong id="metric-rate">—<small>Hz</small></strong><em id="metric-count">等待样本</em></article><article><span>最大已保存角速度</span><strong id="metric-peak">—<small>°/s</small></strong><button id="jump-peak" class="text-link" disabled>定位事件 ↗</button></article><article><span>硬件距离估计</span><strong id="metric-distance">—<small>mm</small></strong><em id="distance-note">未提供 distance_mm</em></article></div>
+   <article class="timeline-card"><div class="section-heading"><div><h3>书写时间线</h3><p>每一个点，都来自保存的样本。</p></div><select id="signal-mode" aria-label="曲线信号"><option value="speed">角速度模长</option><option value="angles">设备欧拉角</option><option value="accel">加速度模长（含重力）</option></select></div><canvas id="signal-chart" aria-label="记录曲线"></canvas><div class="playback"><button id="play" class="play-button" aria-label="播放记录" disabled>▶</button><input id="scrub" type="range" min="0" max="0" value="0" aria-label="回放进度" disabled><span id="play-time">0.00 / 0.00 s</span></div></article>
+   <div class="bottom-grid">
+    <article class="result-card"><div class="section-heading"><h3>记录检查</h3><span id="quality-badge" class="badge">待检查</span></div><div id="quality-content" class="quality-content"><p class="empty-note">导入后查看采样频率、时间连续性与数据完整性。</p></div><div class="actions"><button id="recognize" class="button primary" disabled>匹配示范</button><button id="add-template" class="button" disabled>加入模板库</button><button id="export" class="button subtle" disabled>导出 CSV</button></div><p class="disclaimer" id="recognition-note">未校准时仅返回候选；不会把距离显示为“书法评分”。</p></article>
+    <article class="insight-card"><div class="section-heading"><h3>围绕这次记录</h3><span class="tiny">离线规则解读</span></div><div class="suggestions"><button data-question="哪一段角速度最大？">定位变化最大的时刻 ↗</button><button data-question="这条记录的采样质量怎样？">查看采样质量</button><button data-question="为什么这样识别？">解释匹配结果</button></div><div id="answer" class="answer">选择一个问题，从本次记录里寻找依据。</div><form id="question-form"><input id="question" placeholder="问这次记录…" maxlength="1000" aria-label="记录问题"><button aria-label="发送问题">↗</button></form><small>当前未接外部大模型。回答由已计算指标生成。</small></article>
+   </div>
+  </section>
+  <section id="view-templates" class="view" hidden>
+   <div class="workspace-title"><div><div class="eyebrow">YOUR PERSONAL REFERENCE</div><h2>示范，来自真实练习。</h2></div><button class="button" id="refresh-templates">刷新模板</button></div>
+   <div class="notice" id="template-scope">按当前书写者、安装版本和数据来源隔离模板。</div><div class="template-counts" id="template-counts"></div>
+   <article class="panel"><div class="section-heading"><h3>建立识别依据</h3><button class="button primary" id="calibrate">校准拒识阈值</button></div><p>三个字各至少 3 条有效模板。随后导入每字至少 2 条独立验证记录（建议 5 条），再进行校准。模板改变后需重新校准。</p><div id="calibration-state" class="notice">尚未校准</div><div id="template-list"></div></article>
+   <article class="panel"><div class="section-heading"><h3>独立测试</h3><button class="button" id="evaluate">评估当前测试集</button></div><p>只使用标为“独立测试集”的记录；拒识也计入已知字识别失败。合成数据的结果不代表硬件准确率。</p><div id="evaluation-result" class="empty-note">有独立测试数据后，在这里查看准确率、Macro-F1 和混淆矩阵。</div></article>
+  </section>
+  <section id="view-guide" class="view" hidden>
+   <div class="workspace-title"><div><div class="eyebrow">A SMALL, REAL FIRST STEP</div><h2>先记录，再验证。</h2></div><a href="/docs" target="_blank" class="button">打开接口文档 ↗</a></div>
+   <article class="panel guide"><span class="step-number">01</span><h3>让硬件组交付一个字的 CSV</h3><p>每个采样点一行，建议 100 Hz，序号按采样递增。识别支持 0.5～15 秒；更长记录可以查看、回放，但不直接作为单字模板。时间戳单位是微秒。</p><pre>sample_us,seq,ax_g,ay_g,az_g,gx_dps,gy_dps,gz_dps
+1000000,1,0.01,0.02,1.00,0.1,0.2,0.3
+1010000,2,0.02,0.01,1.00,0.2,0.1,0.4</pre><p>可选：roll_deg、pitch_deg、yaw_deg、boot_id、distance_mm。距离保留为硬件估计，不作为真实笔尖位置。其他附加列也会保留。</p></article>
+   <article class="panel guide"><span class="step-number">02</span><h3>用同一套安装建立个人模板</h3><p>固定传感器朝向，记录书写者和安装版本。分别导入“一、十、口”的示范数据，再点击“加入模板库”。验证集用于校准，测试集留到参数确定后再使用。</p><p>软件示例是合成六轴信号，只用于检查页面和接口。它与真实模板隔离，不能用于真实书写识别。</p></article>
+   <article class="panel guide"><span class="step-number">03</span><h3>打开实时窗口，现场写一个字</h3><p>USB 串口波特率预留 115200。先运行串口桥，再点“开始真实记录”，等实时样本数增长后落笔，写完点“结束并分析”。实时界面与 CSV 共用记录、匹配和报告。安装与示范模板须一致。</p><p>目前串口实际行格式待硬件组提供；“试播模拟实时流”可先检查动画和链路，页面始终标明合成来源。真实设备不会由模拟按钮代替。保存不依赖页面刷新，详见 /docs。</p></article>
+  </section>
+  <section id="view-strokes" class="view" hidden>
+   <div class="workspace-title"><div><div class="eyebrow">STROKE STUDIO · USB IMU</div><h2>逐笔复盘，看见运笔。</h2></div><span class="badge" id="stroke-source">实板采集</span></div>
+   <div class="stroke-grid">
+    <article class="panel stroke-canvas-panel">
+     <div class="section-heading"><div><h3 id="stroke-heading">三 · 第一横</h3><p id="stroke-subheading">选择字与笔画，在米字格中对照范线。</p></div><span class="badge" id="stroke-phase">等待录制</span></div>
+     <div class="stroke-pickers" id="stroke-glyphs" role="group" aria-label="选择字"></div>
+     <div class="stroke-pickers" id="stroke-strokes" role="group" aria-label="选择笔画"></div>
+     <div class="stroke-sheet-wrap">
+      <svg id="stroke-sheet" viewBox="0 0 320 320" role="img" aria-label="米字格内的范线、示范与实测轨迹">
+       <rect x="24" y="24" width="272" height="272" class="stroke-sheet-border"/>
+       <path d="M160 24v272M24 160h272M24 24l272 272M296 24L24 296" class="stroke-sheet-grid"/>
+       <g id="stroke-guides"></g><g id="stroke-paths"></g><g id="stroke-marker"></g>
+      </svg>
+     </div>
+     <ol class="stroke-steps" id="stroke-steps" aria-label="本笔采集流程">
+      <li data-phase="opening"><i></i><span>连接 USB</span></li>
+      <li data-phase="waiting"><i></i><span>等板静止</span></li>
+      <li data-phase="write"><i></i><span>请书写</span></li>
+      <li data-phase="hold"><i></i><span>停笔</span></li>
+      <li data-phase="analyzing"><i></i><span>重建轨迹</span></li>
+     </ol>
+     <div class="stroke-nav">
+      <button id="stroke-prev" class="button subtle" type="button">← 上一笔</button>
+      <span id="stroke-progress" class="tiny">第 1 / 3 笔</span>
+      <button id="stroke-next" class="button subtle" type="button">下一笔 →</button>
+     </div>
+     <div class="stroke-legend"><span><i class="guide"></i>范线</span><span><i class="ref"></i>示范</span><span><i class="actual"></i>本次轨迹</span><span id="stroke-port">USB —</span></div>
+    </article>
+    <article class="panel stroke-review-panel">
+     <div class="section-heading"><div><h3>本笔反馈</h3><p>形状接近度基于轨迹对齐，是练习参考，不是书法评级。</p></div><span class="badge" id="stroke-mode">等待</span></div>
+     <div class="stroke-score-row">
+      <div><span class="stroke-label">形状接近度</span><p class="stroke-score"><strong id="stroke-score">—</strong><small> / 100</small></p></div>
+      <p id="stroke-feedback" class="stroke-feedback">点击“录制本笔”，或先回放示例查看效果。</p>
+     </div>
+     <dl class="stroke-metrics">
+      <div><dt>有效动作时间</dt><dd id="stroke-duration">—</dd></div>
+      <div><dt>估计净位移</dt><dd id="stroke-displacement">—</dd></div>
+      <div><dt>姿态偏转</dt><dd id="stroke-tilt">—</dd></div>
+      <div><dt>分段数</dt><dd id="stroke-segments">—</dd></div>
+     </dl>
+     <div class="actions">
+      <button id="stroke-capture" class="button primary" type="button">录制本笔</button>
+      <button id="stroke-demo" class="button" type="button">回放示例</button>
+      <button id="stroke-save" class="button" type="button" disabled>保存到记录</button>
+      <button id="stroke-reference" class="button subtle" type="button" disabled>设为示范</button>
+     </div>
+     <p class="disclaimer">实板采集需要开发板通过 USB 连接，并关闭占用串口的监视器。当前端口 <b id="stroke-port-2">COM10</b>；可用 <code>BRUSH_SERIAL_PORT</code> 修改。</p>
+    </article>
+   </div>
+   <article class="panel stroke-timeline-panel">
+    <div class="section-heading"><div><h3>本笔姿态回放</h3><p>倾角来自设备四元数；位置由加速度重建，不是纸面墨迹。</p></div><span class="tiny" id="stroke-time">—</span></div>
+    <canvas id="stroke-chart" aria-label="本笔倾角时间线"></canvas>
+    <div class="playback"><button id="stroke-play" class="play-button" type="button" aria-label="播放本笔" disabled>▶</button><input id="stroke-scrub" type="range" min="0" max="1000" value="1000" disabled aria-label="回放进度"><span id="stroke-time-readout">—</span></div>
+   </article>
+  </section>
+  <footer class="workspace-footer"><span>墨序 · 用数据记录用笔过程</span><span id="footer-record">LOCAL WORKSPACE / V0.1</span></footer>
+ </section>
+</main><div id="toast" class="toast" role="status" hidden></div>
+</body></html>
